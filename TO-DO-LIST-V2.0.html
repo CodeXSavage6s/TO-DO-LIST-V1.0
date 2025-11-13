@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+    </head>
+    <style>
+        :root {
+            --bg: #f7f9fc;
+            --text: #111;
+            --card: #fff;
+            --accent: #4f46e5;
+            --muted: #777;
+        }
+        body.dark {
+            --bg: #0d1117;
+            --text: #e5e7eb;
+            --card: #161b22;
+            --accent: #c70b0b;
+            --muted: #9ca3af;
+        }
+        *{box-sizing: border-box;}
+        body {
+            background: var(--bg);
+            text-align: center;
+            color: var(--text);
+            transition-duration: 0.5s;
+        }
+        #box {
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 400px;
+            border-radius: 20px;
+            box-shadow: 0px 0px 20px var(--muted);
+            padding: 20px;
+            color: var(--text);
+            max-height: 500px;
+        }
+        button {
+            background: var(--accent);
+            border: 0.5px solid;
+            border-radius: 5px;
+            color: #fff;
+            max-width: 90px;
+            min-height: 32px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .input {
+            background: var(--bg);border: 0.5px solid;
+            border-radius: 5px;
+            font-weight: 700;
+            min-height: 30px;
+            width: 85%;
+            color: var(--text);
+        }
+        select {
+            background: var(--bg);
+            border-radius: 5px;
+            color: var(--text);
+        }
+        #toggle {
+            position: relative;
+            right: 10px;
+        }
+        .inp {
+            display: flex;
+            justify-content: space-between;
+        }
+        .item {
+            display: flex;
+            justify-content: space-between;
+            background: var(--bg);
+            border-radius: 10px;
+            border: 1px solid;
+            text-align: center;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+        .done {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+        #tasksList {
+            overflow: auto;
+        }
+    </style>
+    <body>
+        <h1>TO-DO-LIST-V2.0</h1>
+    <div id="box">
+    <div style="width: 100%; text-align: right;"><button id="toggle">Toggle Theme</button></div>
+        <div class="inp">
+        <input type="text" class="input" id="taskInput" placeholder="Input task..."><button id="add">Add</button>
+        </div>
+    <div id="sortFunc" class="inp">
+        <input type="search" id="search" class="input" placeholder="Search task...">
+        <select name="sort" id="select">
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="done">Completed</option>
+    </div>
+        </select>
+    </div>
+    <div class="task" id="tasksList"></div>
+        <div id="count"></div>
+    <button id="clearBtn" onclick="clearTasks()">Clear Task</button>
+    <script>
+        let tasks = JSON.parse(localStorage.getItem("tasks_V1")) || [];
+
+        const toggleTheme = document.getElementById("toggle");
+        const taskInput = document.getElementById("taskInput");
+        const addBtn = document.getElementById("add");
+        const search1 = document.getElementById("search");
+        const sort = document.getElementById("select");
+        const count = document.getElementById("count");
+        const list = document.getElementById("tasksList")
+
+        function saveTasks() {
+            localStorage.setItem("tasks_V1", JSON.stringify(tasks))
+        }
+
+        function render() {
+            list.innerHTML = ""
+            const search2 = search1.value.toLowerCase();
+            const currentFilter = sort.value;
+
+            let filtered = tasks.filter(t =>
+                t.tittle.toLowerCase().includes(search2) &&
+                (currentFilter === "all" || (currentFilter === "done"? t.done : !t.done))
+            );
+
+            filtered.forEach(task => {
+                const item = document.createElement("div");
+                item.className = "item" + (task.done? " done": "");
+                
+                item.innerHTML = `
+                <input type="checkbox" ${task.done? "checked": ""}>
+                <div class="tittle" contenteditable="true">${task.tittle}</div>
+                <button class="delBtn">X</button>
+                `;
+
+                const checkbox = item.querySelector("input");
+                checkbox.onchange = () => {
+                    task.done = !task.done;
+                    saveTasks(); render();
+                }
+
+                item.querySelector("button").onclick = () => {
+                    tasks = tasks.filter(t => t !== task)
+                    saveTasks(); render();
+                }
+                 
+                const title = item.querySelector(".tittle");
+                title.onblur = () => {
+            task.tittle = title.textContent.trim();
+            saveTasks(); 
+        }
+
+                list.appendChild(item)
+            });
+
+            count.textContent = `${tasks.filter(t => t.done).length} completed taks(s)`;
+
+        }
+        addBtn.onclick = () => {
+            const text = taskInput.value.trim();
+            if (!text) {alert("input text"); return};
+            tasks.push({tittle: text, done: false})
+            taskInput.value = ""
+            saveTasks(); render();
+        }
+        
+        sort.onchange = render;
+        search1.oninput = render;
+
+        taskInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {addBtn.onclick()}
+        } )
+
+        function clearTasks() {
+            tasks = [];
+            saveTasks();
+             render(); 
+        }
+               toggleTheme.onclick = () => {
+            document.body.classList.toggle("dark")
+        }
+        render();
+    </script>
+    </body>
+</html>
